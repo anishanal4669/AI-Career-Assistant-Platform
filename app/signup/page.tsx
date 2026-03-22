@@ -1,52 +1,65 @@
-"use client"; 
-//This tells Next.js to run this file in the browser
+"use client";
 
 import { useState } from "react";
-//usestate helps to store state as memory. Allows to remember user input. 
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { signup, login } from "@/app/lib/api";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function SignupPage() {
-
-  //Created single state object to store all inputs
+  const router = useRouter();
+  const { setToken } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  //This function runs everytime there is a user input and updates only the specific field changing.
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      //We spread the existing formData so previosuly entered values are not lost while updating.
-      [e.target.name]: e.target.value,
-      //This updates whichever field is input. If name= "email", it updates email. 
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  //This function runs when there is form submisson. 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    //prevents browser from refreshing the page on form submit 
-    console.log("Signup Data:", formData);
-    //This is where we send the data to backend later
+    setError("");
+    setLoading(true);
+
+    try {
+      await signup(formData.name, formData.email, formData.password);
+      const data = await login(formData.email, formData.password);
+      setToken(data.access_token);
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Signup failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <form
-      //The form calls handleSubmit when user clicks on submit. 
         onSubmit={handleSubmit}
         className="bg-white shadow-lg rounded-xl p-8 w-96"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">
           Create Account
         </h2>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 text-sm p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         <input
           type="text"
           name="name"
           placeholder="Full Name"
-          className="w-full border p-2 mb-4 rounded"
+          required
+          className="w-full border border-gray-300 p-2.5 mb-4 rounded text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           onChange={handleChange}
         />
 
@@ -54,7 +67,8 @@ export default function SignupPage() {
           type="email"
           name="email"
           placeholder="Email"
-          className="w-full border p-2 mb-4 rounded"
+          required
+          className="w-full border border-gray-300 p-2.5 mb-4 rounded text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           onChange={handleChange}
         />
 
@@ -62,16 +76,26 @@ export default function SignupPage() {
           type="password"
           name="password"
           placeholder="Password"
-          className="w-full border p-2 mb-4 rounded"
+          required
+          minLength={6}
+          className="w-full border border-gray-300 p-2.5 mb-4 rounded text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           onChange={handleChange}
         />
 
         <button
           type="submit"
-          className="w-full bg-black text-white p-2 rounded"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded font-medium transition disabled:opacity-50"
         >
-          Sign Up
+          {loading ? "Creating Account..." : "Sign Up"}
         </button>
+
+        <p className="text-center text-sm text-gray-500 mt-4">
+          Already have an account?{" "}
+          <Link href="/login" className="text-blue-600 hover:underline">
+            Login
+          </Link>
+        </p>
       </form>
     </div>
   );
