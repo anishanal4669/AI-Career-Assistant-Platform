@@ -1,17 +1,17 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# SQLite database path
-DATABASE_URL = "sqlite:///./career_assistant.db"
+from config import DATABASE_URL
 
-# Creates engine (engine: connection to database file)
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
-
-# Sessionlocal= creates new sessions
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for models
 Base = declarative_base()
+
+
+def get_db():
+    """Yield a database session per request."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

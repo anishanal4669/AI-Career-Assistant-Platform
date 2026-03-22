@@ -1,36 +1,220 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Career Assistant Platform
 
-## Getting Started
+An AI-powered career guidance platform that helps students become industry-ready in **AI**, **VLSI**, and **Software Engineering** through personalized career guidance, learning paths, resume feedback, job matching, and an AI chat assistant.
 
-First, run the development server:
+## Architecture
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Frontend       │     │   Backend        │     │   PostgreSQL     │
+│   (Next.js)      │────▶│   (FastAPI)      │────▶│   Database       │
+│   Port 3000      │     │   Port 8000      │     │   Port 5432      │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                              │
+                              ▼
+                        ┌─────────────┐
+                        │  LLM Service │
+                        │  (OpenAI /   │
+                        │  Fallback)   │
+                        └─────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Layer      | Technology                              |
+|------------|-----------------------------------------|
+| Frontend   | Next.js 16, React 19, Tailwind CSS 4    |
+| Backend    | Python, FastAPI, SQLAlchemy, Alembic    |
+| Database   | PostgreSQL 16                           |
+| Auth       | JWT (python-jose), bcrypt (passlib)     |
+| AI/LLM     | OpenAI API (pluggable) + fallback       |
+| DevOps     | Docker, Docker Compose                  |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+root/
+├── app/                        # Next.js frontend
+│   ├── components/             # Reusable UI components
+│   │   ├── Navbar.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── JobCard.tsx
+│   │   └── ChatMessage.tsx
+│   ├── context/
+│   │   └── AuthContext.tsx      # Auth state management
+│   ├── lib/
+│   │   └── api.ts              # API client
+│   ├── login/page.tsx
+│   ├── signup/page.tsx
+│   ├── dashboard/page.tsx
+│   ├── profile/page.tsx
+│   ├── upload-resume/page.tsx
+│   ├── jobs/page.tsx
+│   ├── learning-path/page.tsx
+│   ├── chat/page.tsx
+│   ├── layout.tsx
+│   └── page.tsx                # Landing page
+│
+├── backend/                    # FastAPI backend
+│   ├── models/                 # SQLAlchemy ORM models
+│   │   ├── user.py
+│   │   ├── profile.py
+│   │   ├── resume.py
+│   │   ├── job.py
+│   │   ├── learning_path.py
+│   │   └── chat_history.py
+│   ├── schemas/                # Pydantic request/response schemas
+│   ├── routers/                # API route handlers
+│   │   ├── auth.py
+│   │   ├── profile.py
+│   │   ├── resume.py
+│   │   ├── jobs.py
+│   │   ├── learning_path.py
+│   │   └── chat.py
+│   ├── services/               # Business logic layer
+│   │   ├── auth_service.py
+│   │   ├── profile_service.py
+│   │   ├── resume_service.py
+│   │   ├── job_service.py
+│   │   ├── learning_path_service.py
+│   │   ├── chat_service.py
+│   │   └── llm_service.py     # AI abstraction layer
+│   ├── migrations/             # Alembic migrations
+│   ├── main.py                 # FastAPI app entry point
+│   ├── config.py               # Environment configuration
+│   ├── database.py             # DB connection
+│   ├── auth.py                 # Auth dependencies
+│   ├── seed.py                 # Database seed script
+│   └── Dockerfile
+│
+├── docker-compose.yml
+├── Dockerfile                  # Frontend Dockerfile
+├── Makefile
+├── .env.example
+└── package.json
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Quick Start
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prerequisites
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+- (Optional) [Make](https://www.gnu.org/software/make/)
 
-## Deploy on Vercel
+### 1. Clone and configure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+git clone <repo-url>
+cd AI-Career-Assistant-Platform
+cp .env.example .env
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Start all services
+
+```bash
+# Using Make
+make dev
+
+# Or directly with Docker Compose
+docker compose up --build
+```
+
+### 3. Seed the database
+
+In a separate terminal:
+
+```bash
+make seed
+
+# Or:
+docker compose exec backend python seed.py
+```
+
+### 4. Access the application
+
+| Service   | URL                         |
+|-----------|-----------------------------|
+| Frontend  | http://localhost:3000        |
+| Backend   | http://localhost:8000        |
+| API Docs  | http://localhost:8000/docs   |
+
+### 5. Test the full flow
+
+1. **Sign up** at http://localhost:3000/signup (or use seeded credentials below)
+2. **Upload a resume** (PDF or DOCX)
+3. **View job recommendations** matched to your skills
+4. **Chat with the AI assistant** for career guidance
+5. **Track learning paths** based on your skill profile
+
+### Seeded Test Credentials
+
+| Email              | Password      |
+|--------------------|---------------|
+| alice@example.com  | password123   |
+| bob@example.com    | password123   |
+| carol@example.com  | password123   |
+
+## API Endpoints
+
+| Method | Endpoint                | Auth     | Description                     |
+|--------|-------------------------|----------|---------------------------------|
+| POST   | `/auth/signup`          | No       | Register new user               |
+| POST   | `/auth/login`           | No       | Login, returns JWT token        |
+| GET    | `/profile`              | Bearer   | Get current user info           |
+| GET    | `/profile/details`      | Bearer   | Get full profile details        |
+| PUT    | `/profile/details`      | Bearer   | Update profile                  |
+| POST   | `/resume/upload`        | Bearer   | Upload resume (PDF/DOCX)        |
+| GET    | `/resume`               | Bearer   | List user's resumes             |
+| GET    | `/jobs`                 | No       | List all jobs                   |
+| GET    | `/jobs/matched`         | Bearer   | Get jobs matched to user skills |
+| GET    | `/learning-path`        | Bearer   | Get user's learning paths       |
+| POST   | `/learning-path/generate` | Bearer | Regenerate learning paths       |
+| PUT    | `/learning-path/{id}`   | Bearer   | Update progress                 |
+| POST   | `/chat`                 | Bearer   | Send message to AI assistant    |
+| GET    | `/chat/history`         | Bearer   | Get chat history                |
+
+## Development Commands
+
+```bash
+make dev          # Start all services with hot reload
+make build        # Build containers
+make start        # Start in background
+make stop         # Stop all services
+make seed         # Run seed script
+make migrate      # Apply database migrations
+make logs         # View all logs
+make logs-backend # View backend logs only
+make clean        # Remove containers, volumes, images
+make reset        # Full reset: rebuild + re-seed
+```
+
+## Database Tables
+
+| Table           | Description                         |
+|-----------------|-------------------------------------|
+| `users`         | Registered users with auth info     |
+| `profiles`      | User profiles, skills, interests    |
+| `resumes`       | Uploaded resume metadata & skills   |
+| `jobs`          | Job listings with required skills   |
+| `learning_paths`| Personalized learning paths         |
+| `chat_history`  | Conversation history with AI        |
+
+## AI / LLM Integration
+
+The platform includes an abstraction layer at `backend/services/llm_service.py` that supports:
+
+- **OpenAI API** — set `OPENAI_API_KEY` in `.env`
+- **OpenRouter** — change the base URL in `llm_service.py`
+- **Local models** — add a provider for Ollama / llama.cpp
+- **RAG pipeline** — extend with document retrieval for context-aware responses
+
+Without an API key, the app uses a built-in rule-based fallback that provides career guidance responses for resume tips, interview prep, AI/ML, VLSI, and job search topics.
+
+## Environment Variables
+
+| Variable             | Description                        | Default                        |
+|----------------------|------------------------------------|--------------------------------|
+| `DATABASE_URL`       | PostgreSQL connection string       | `postgresql://postgres:postgres@localhost:5432/career_assistant` |
+| `JWT_SECRET`         | Secret key for JWT tokens          | `dev-secret-key-change-in-production` |
+| `NEXT_PUBLIC_API_URL`| Backend API URL for frontend       | `http://localhost:8000`        |
+| `OPENAI_API_KEY`     | OpenAI API key (optional)          | *(empty — uses fallback)*      |
